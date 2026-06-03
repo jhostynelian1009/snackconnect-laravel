@@ -6,7 +6,7 @@ Este directorio contiene las **skills operativas (runbooks)** estructuradas para
 
 | Archivo | Tarea Técnica | Responsable | Rama Git |
 | :--- | :--- | :--- | :--- |
-| [setup_skill.md](setup_skill.md) | Inicializar e instalar Laravel y SQLite. | **Líder Técnico** | `feature/00-setup` |
+| [setup_skill.md](setup_skill.md) | Inicializar e instalar Laravel y MySQL 8.x. | **Líder Técnico** | `feature/00-setup` |
 | [auth_skill.md](auth_skill.md) | Control de sesiones, registro, login y middleware. | **DEV-AUTH** | `feature/02-auth` |
 | [productos_skill.md](productos_skill.md) | CRUD de productos y categorías, subida de imágenes. | **DEV-PROD** | `feature/05-crud-products` |
 | [dashboard_skill.md](dashboard_skill.md) | Panel de administración privado y vistas de métricas. | **DEV-DASH** | `feature/04-dashboard` |

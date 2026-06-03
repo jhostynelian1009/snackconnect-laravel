@@ -1,6 +1,6 @@
-# Modelo de Base de Datos - SnackConnect Laravel (Portabilidad SQLite)
+# Modelo de Base de Datos - SnackConnect Laravel (MySQL 8.x)
 
-El esquema está optimizado para SQLite. Las llaves foráneas se mantendrán simples para evitar problemas de compatibilidad y bloqueos de tabla.
+El esquema está diseñado y optimizado para MySQL 8.x. Las llaves foráneas se implementan de forma nativa para mantener la integridad referencial.
 
 ## 1. Diseño Lógico de Datos
 
@@ -37,4 +37,4 @@ erDiagram
 *   **Restricciones de Integridad:**
     *   `categories.slug` y `products.slug` deben generarse automáticamente a partir de los nombres (`Str::slug`) para asegurar rutas URL limpias y amigables.
     *   La relación `products.category_id` tendrá la cláusula `onDelete('cascade')` para limpiar productos si una categoría es eliminada por el administrador.
-    *   El campo `products.status` será de tipo String (`active` o `inactive`), evitando tipos Enum nativos que en algunas versiones antiguas de SQLite pueden presentar incompatibilidades.
+    *   El campo `products.status` será de tipo String (`active` o `inactive`), asegurando compatibilidad directa con MySQL 8.x.

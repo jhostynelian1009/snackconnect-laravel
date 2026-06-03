@@ -22,6 +22,6 @@ Toda implementación en `app/` o runbook de automatización en `skill/` debe est
 *   [Visión General](vision.md): Justificación académica, objetivos del proyecto y restricciones.
 *   [Requerimientos](requerimientos.md): Requerimientos funcionales y no funcionales vinculados a la rúbrica.
 *   [Arquitectura de Software](arquitectura.md): Patrón MVC Monolítico simplificado y enrutamiento.
-*   [Modelo de Base de Datos](base_datos.md): Entidades y relaciones sobre SQLite.
+*   [Modelo de Base de Datos](base_datos.md): Entidades y relaciones sobre MySQL 8.x.
 *   [Roadmap del Proyecto](roadmap.md): Planificación detallada para el ciclo de 12 días.
 *   [Módulos Funcionales](modulos/README.md): Especificaciones detalladas por módulo de trabajo.

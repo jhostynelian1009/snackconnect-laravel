@@ -14,7 +14,7 @@ Este módulo implementa el flujo de finalización de compra sin añadir la compl
 *   **HU-WA-02 (Generar mensaje WhatsApp):** Como cliente, quiero presionar "Confirmar Pedido" para enviar mi carrito formateado al WhatsApp del negocio.
 
 ## 3. Especificación Técnica
-*   **Almacenamiento del Carrito:** `localStorage` del navegador para evitar persistencia costosa en la base de datos sqlite.
+*   **Almacenamiento del Carrito:** `localStorage` del navegador para evitar persistencia costosa en la base de datos MySQL.
 *   **Configuración del número de teléfono:** Almacenado en `.env` como `WHATSAPP_PHONE`.
 *   **Estructura del Mensaje (Markdown WhatsApp):**
     ```text

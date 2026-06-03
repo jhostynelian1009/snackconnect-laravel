@@ -21,7 +21,7 @@ Para cumplir exitosamente con la rúbrica de evaluación del proyecto, los reque
 | :--- | :--- | :--- | :--- |
 | **RNF-01** | **Seguridad CSRF/XSS** | Protección obligatoria de formularios y escape de variables en Blade. | **DEV-AUTH / QA** |
 | **RNF-02** | **Pruebas Automatizadas** | Mínimo de 8 Feature Tests válidos implementados cubriendo Auth, CRUD y filtros. | **QA** |
-| **RNF-03** | **Portabilidad de Base de Datos**| Configuración y uso de SQLite integrada en el proyecto para ejecución inmediata. | **LT** |
+| **RNF-03** | **Estándar de Base de Datos**| Configuración y uso de MySQL 8.x para compatibilidad local con XAMPP y phpMyAdmin. | **LT** |
 | **RNF-04** | **Clean Code / PSR-12** | Estilo de código consistente sin advertencias de linters. | **Todos / QA** |
 
 ---

@@ -9,7 +9,7 @@ El principal objetivo del proyecto no es construir un sistema comercial a gran e
 **SnackConnect** permite a pequeños comercios locales de snacks y alimentos digitalizar su carta y recibir pedidos directos a través de WhatsApp sin intermediarios ni pasarelas de pago externas complejas, las cuales representarían un riesgo de integración inaceptable dentro del límite de 12 días.
 
 ## 3. Limitaciones y Alcance del Proyecto Académico
-*   **Base de Datos Portátil:** Uso exclusivo de SQLite para evitar problemas de compatibilidad de motores de base de datos durante la evaluación docente local.
+*   **Base de Datos Estándar:** Uso de MySQL 8.x para garantizar compatibilidad con XAMPP, phpMyAdmin y entornos reales de producción, facilitando la exposición académica.
 *   **Checkout sin Pasarela de Pago:** Redirección limpia a WhatsApp que encapsula el pedido en un string URL, eliminando la necesidad de APIs de pago (Stripe, PayPal) que requieran credenciales o cuentas activas.
 *   **Despliegue Local Rápido:** Configuración ágil a través del servidor local de Laravel Vite y Artisan.
 

@@ -1,10 +1,15 @@
-# Arquitectura del Sistema - SnackConnect Laravel (Criterio de Bajo Riesgo)
+# Arquitectura del Sistema - SnackConnect Laravel (MySQL 8.x)
 
 Para este proyecto académico, la arquitectura busca mitigar riesgos de configuración del entorno y fallos de despliegue local durante la evaluación del docente.
 
 ## 1. Stack Tecnológico de Bajo Riesgo
 *   **Framework:** Laravel 11.x (PHP 8.2+)
-*   **Base de Datos:** SQLite (integrada en archivo físico `database/database.sqlite`), eliminando dependencias de servidores locales MySQL (XAMPP/Wamp) que puedan fallar en la máquina del evaluador.
+*   **Base de Datos:** MySQL 8.x, seleccionada por las siguientes justificaciones arquitectónicas:
+    *   Compatibilidad directa con XAMPP y phpMyAdmin.
+    *   Familiaridad del equipo de desarrollo.
+    *   Compatibilidad con la mayoría de proveedores de hosting compartido.
+    *   Mayor similitud con entornos reales de producción.
+    *   Facilidad para la exposición académica y evaluación docente.
 *   **Gestión de Assets:** Laravel Vite (compilación local ligera).
 *   **Frontend:** Vistas Blade estructuradas en layouts reutilizables, estiladas con CSS Vanilla o TailwindCSS para asegurar adaptabilidad móvil (Mobile First).
 

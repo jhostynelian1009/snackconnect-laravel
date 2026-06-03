@@ -7,10 +7,10 @@
 ---
 
 ## 1. Instrucciones de Configuración y Ejecución
-1.  **Configurar base de datos de pruebas en memoria (`phpunit.xml`):**
+1.  **Configurar base de datos de pruebas (`phpunit.xml`):**
     ```xml
-    <env name="DB_CONNECTION" value="sqlite"/>
-    <env name="DB_DATABASE" value=":memory:"/>
+    <env name="DB_CONNECTION" value="mysql"/>
+    <env name="DB_DATABASE" value="snackconnect_test"/>
     ```
 2.  **Escribir pruebas funcionales en `/tests/Feature/`:**
     *   **Autenticación:** Probar registro correcto, login válido/inválido e interceptación de middleware `auth` en rutas administrativas.

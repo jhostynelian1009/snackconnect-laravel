@@ -11,15 +11,20 @@
     ```powershell
     composer create-project laravel/laravel app
     ```
-2.  **Configurar base de datos SQLite:**
-    *   Ingresar a `/app` y crear el archivo físico para la base de datos:
+2.  **Configurar base de datos MySQL 8.x:**
+    *   Iniciar Apache y MySQL desde el Panel de Control de XAMPP.
+    *   Crear la base de datos `snackconnect` a través de phpMyAdmin o la línea de comandos de MySQL:
         ```powershell
-        New-Item -Path "database/database.sqlite" -ItemType "file"
+        mysql -u root -e "CREATE DATABASE snackconnect;"
         ```
-    *   Editar `app/.env` y establecer:
+    *   Editar `app/.env` y establecer las variables de conexión:
         ```env
-        DB_CONNECTION=sqlite
-        # Comentar variables de DB_HOST, DB_PORT, DB_DATABASE, DB_USERNAME, DB_PASSWORD
+        DB_CONNECTION=mysql
+        DB_HOST=127.0.0.1
+        DB_PORT=3306
+        DB_DATABASE=snackconnect
+        DB_USERNAME=root
+        DB_PASSWORD=
         ```
 3.  **Ejecutar migraciones iniciales de Laravel:**
     ```powershell
@@ -27,7 +32,7 @@
     ```
 
 ## 2. Puntos de Control y Verificación
-*   [ ] Comprobar que `/app/database/database.sqlite` existe y su tamaño es mayor a 0 KB (lo que indica que se crearon las tablas iniciales de Laravel).
+*   [ ] Comprobar en phpMyAdmin o la línea de comandos que la base de datos `snackconnect` contiene las tablas iniciales de Laravel que se generaron tras ejecutar la migración.
 *   [ ] Iniciar el servidor local (`php artisan serve`) y verificar la respuesta HTTP 200 en `http://127.0.0.1:8000`.
 *   [ ] Integrar e inicializar el repositorio Git local:
     ```powershell

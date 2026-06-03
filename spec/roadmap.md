@@ -7,7 +7,7 @@ Debido a la restricción de **12 días** para la entrega final del proyecto acad
 ## 1. Roadmap Diario (Calendario de 12 Días)
 
 ### Hito 1: Cimientos (Días 1 - 2)
-*   **Día 1:** Inicialización del proyecto Laravel, creación de la base de datos SQLite y configuración del repositorio en GitHub (**Líder Técnico**).
+*   **Día 1:** Inicialización del proyecto Laravel, configuración de la base de datos MySQL 8.x y configuración del repositorio en GitHub (**Líder Técnico**).
 *   **Día 2:** Estructuración de archivos de migración iniciales, seeds y definición de layouts Blade compartidos (**Líder Técnico** y **QA**).
 *   *Merge Hito 1:* Integración y congelamiento de la rama base `develop`.
 
