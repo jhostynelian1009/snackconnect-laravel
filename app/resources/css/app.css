@@ -8,4 +8,135 @@
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* === Brand Colors (design-system.md §2.1) === */
+    --color-brand-primary: #F53003;
+    --color-brand-primary-hover: #D42800;
+    --color-brand-secondary: #F8B803;
+    --color-brand-rose: #F0ACB8;
+    --color-brand-rose-light: #F3BEC7;
+    --color-brand-dark-red: #1D0002;
+    --color-brand-whatsapp: #25D366;
+    --color-brand-whatsapp-hover: #1DA851;
+
+    /* === Neutral Colors (design-system.md §2.2) === */
+    --color-bg-base: #FDFDFC;
+    --color-bg-surface: #FFFFFF;
+    --color-bg-muted: #fff2f2;
+    --color-bg-subtle: #dbdbd7;
+    --color-text-primary: #1b1b18;
+    --color-text-secondary: #706f6c;
+    --color-text-inverse: #FFFFFF;
+    --color-border-default: #e3e3e0;
+    --color-border-strong: rgba(25, 20, 0, 0.21);
+
+    /* === Semantic Colors (design-system.md §2.3) === */
+    --color-success: #16a34a;
+    --color-warning: #F8B803;
+    --color-danger: #F53003;
+    --color-info: #0284c7;
+
+    /* === Shadows (design-system.md §6) === */
+    --shadow-micro: 0 1px rgba(0,0,0,0.03);
+    --shadow-xs: 0px 0px 1px rgba(0,0,0,0.03), 0px 1px 2px rgba(0,0,0,0.06);
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.10), 0 1px 2px -1px rgba(0,0,0,0.10);
+    --shadow-elevated: 0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
+    --shadow-dropdown: 0 10px 15px -3px rgba(0,0,0,0.10), 0 4px 6px -4px rgba(0,0,0,0.10);
+    --shadow-modal: 0 20px 25px -5px rgba(0,0,0,0.10), 0 8px 10px -6px rgba(0,0,0,0.10);
+    --shadow-inset: inset 0px 0px 0px 1px rgba(26,26,0,0.16);
 }
+
+/* === Dark Mode Overrides (design-system.md §8) === */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --color-bg-base: #0a0a0a;
+        --color-bg-surface: #161615;
+        --color-bg-muted: #1D0002;
+        --color-bg-subtle: #3E3E3A;
+        --color-text-primary: #EDEDEC;
+        --color-text-secondary: #A1A09A;
+        --color-text-inverse: #1C1C1A;
+        --color-border-default: #3E3E3A;
+        --color-border-strong: rgba(255, 250, 237, 0.18);
+        --color-brand-primary: #FF4433;
+    }
+}
+
+/* === Card Base Pattern (ui-components.md §3.1) === */
+.sc-card {
+    background: var(--color-bg-surface);
+    box-shadow: inset 0px 0px 0px 1px rgba(26,26,0,0.16);
+    border-radius: 0.5rem;
+    transition: box-shadow 200ms ease-in-out;
+}
+.sc-card:hover {
+    box-shadow: inset 0px 0px 0px 1px rgba(26,26,0,0.16),
+                0 4px 6px -1px rgba(0,0,0,0.10), 0 2px 4px -2px rgba(0,0,0,0.10);
+}
+
+/* === Button Base (ui-components.md §4.3) === */
+.sc-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
+    line-height: normal;
+    font-size: 0.875rem;
+    padding: 6px 20px;
+    min-height: 36px;
+}
+.sc-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sc-btn-primary {
+    background: #1b1b18; color: #FFFFFF; border: 1px solid #000;
+}
+.sc-btn-primary:hover { background: #000000; }
+.sc-btn-secondary {
+    background: transparent; color: var(--color-text-primary);
+    border: 1px solid var(--color-border-strong);
+}
+.sc-btn-secondary:hover { background: rgba(0,0,0,0.04); }
+.sc-btn-accent {
+    background: #F53003; color: #FFFFFF; border: 1px solid #F53003;
+}
+.sc-btn-accent:hover { background: #D42800; }
+.sc-btn-whatsapp {
+    background: #25D366; color: #FFFFFF; border: 1px solid #25D366;
+}
+.sc-btn-whatsapp:hover { background: #1DA851; }
+.sc-btn-lg { padding: 10px 24px; font-size: 1rem; min-height: 44px; }
+
+/* === Category Chip (ui-components.md §3.4) === */
+.sc-chip {
+    display: inline-flex; align-items: center;
+    padding: 6px 16px; border-radius: 9999px;
+    font-size: 0.875rem; font-weight: 500;
+    border: 1px solid var(--color-border-default);
+    background: transparent; color: var(--color-text-primary);
+    transition: all 150ms ease-in-out; cursor: pointer;
+    text-decoration: none; white-space: nowrap;
+}
+.sc-chip:hover, .sc-chip.active {
+    background: #F3BEC7; border-color: #F0ACB8; color: var(--color-text-primary);
+}
+
+/* === Pagination (ui-components.md §10) === */
+.sc-pagination { display: flex; justify-content: center; gap: 0.25rem; }
+.sc-pagination a, .sc-pagination span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 36px; height: 36px; font-size: 0.875rem; font-weight: 500;
+    border-radius: 0.25rem; color: var(--color-text-primary);
+    transition: background 150ms;
+}
+.sc-pagination a:hover { background: rgba(0,0,0,0.04); }
+.sc-pagination .active span {
+    background: #F53003; color: #FFFFFF;
+}
+.sc-pagination .disabled span { opacity: 0.4; cursor: not-allowed; }
+
+/* === Responsive scrollbar hide for category chips === */
+.sc-chips-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+.sc-chips-scroll::-webkit-scrollbar { display: none; }
