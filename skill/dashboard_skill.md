@@ -6,6 +6,16 @@
 
 ---
 
+## 0. Prerrequisito Obligatorio — Design System
+
+> **⚠ ANTES de implementar cualquier interfaz**, leer obligatoriamente:
+> *   [spec/design/design-system.md](../spec/design/design-system.md)
+> *   [spec/design/ui-components.md](../spec/design/ui-components.md)
+>
+> **Ningún componente visual puede crearse fuera del sistema de diseño aprobado.**
+
+---
+
 ## 1. Instrucciones de Implementación
 1.  **Crear el controlador administrativo:**
     ```powershell

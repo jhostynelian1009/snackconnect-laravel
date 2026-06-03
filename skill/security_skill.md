@@ -6,6 +6,16 @@
 
 ---
 
+## 0. Prerrequisito Obligatorio — Design System
+
+> **⚠ ANTES de implementar cualquier interfaz**, leer obligatoriamente:
+> *   [spec/design/design-system.md](../spec/design/design-system.md)
+> *   [spec/design/ui-components.md](../spec/design/ui-components.md)
+>
+> **Ningún componente visual puede crearse fuera del sistema de diseño aprobado.**
+
+---
+
 ## 1. Auditorías de Seguridad Obligatorias
 El integrante de **QA** debe auditar el código desarrollado antes de cada Hito del Roadmap para cumplir con la rúbrica de seguridad.
 
