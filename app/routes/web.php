@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProductController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -21,7 +23,7 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
-    
+
     Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
     Route::post('/register', [AuthController::class, 'register']);
 });
@@ -32,7 +34,7 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Bloque 3 (DEV-DASH / DEV-PROD): Prefijo /admin y controladores asociados
+| Bloque 3 (DEV-DASH): Dashboard Administrativo
 |--------------------------------------------------------------------------
 */
 Route::middleware('auth')->group(function () {
@@ -44,3 +46,26 @@ Route::middleware('auth')->group(function () {
     })->name('dashboard');
 });
 
+/*
+|--------------------------------------------------------------------------
+| Bloque 3 (DEV-PROD): CRUD Productos y Categorías
+|--------------------------------------------------------------------------
+|
+| Vistas CRUD: @extends('layouts.admin')
+| Layout pendiente de integración con DEV-DASH.
+| Ver: docs/DEV-PROD-INTEGRACION.md
+|
+*/
+Route::middleware('auth')
+    ->prefix('admin')
+    ->name('admin.')
+    ->group(function () {
+
+        Route::resource('categorias', CategoryController::class)
+            ->parameters(['categorias' => 'categoria'])
+            ->except(['show']);
+
+        Route::resource('productos', ProductController::class)
+            ->parameters(['productos' => 'producto'])
+            ->except(['show']);
+    });
