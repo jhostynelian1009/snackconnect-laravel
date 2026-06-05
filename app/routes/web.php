@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -38,13 +39,9 @@ Route::middleware('auth')->group(function () {
 | Bloque 3 (DEV-DASH): Dashboard Administrativo
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->group(function () {
-    Route::get('/admin/dashboard', function () {
-        return response()->json([
-            'message' => 'Welcome to the Admin Dashboard (Placeholder)',
-            'user' => Auth::user(),
-        ]);
-    })->name('dashboard');
+Route::middleware('auth')->prefix('admin')->group(function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('admin.dashboard');
 });
 
 /*
