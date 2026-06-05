@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController;
 use Illuminate\Support\Facades\Auth;
@@ -8,16 +9,16 @@ use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Bloque 1 (DEV-FRONT): Rutas de inicio, catálogo y checkout
+| Bloque 1 (DEV-FRONT): Landing, Catálogo y Checkout
 |--------------------------------------------------------------------------
 */
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [CatalogController::class, 'landing'])->name('landing');
+Route::get('/catalogo', [CatalogController::class, 'index'])->name('catalogo.index');
+Route::get('/catalogo/{slug}', [CatalogController::class, 'show'])->name('catalogo.show');
 
 /*
 |--------------------------------------------------------------------------
-| Bloque 2 (DEV-AUTH): Rutas de login, registro y logout
+| Bloque 2 (DEV-AUTH): Login, Registro y Logout
 |--------------------------------------------------------------------------
 */
 Route::middleware('guest')->group(function () {
@@ -48,13 +49,8 @@ Route::middleware('auth')->group(function () {
 
 /*
 |--------------------------------------------------------------------------
-| Bloque 3 (DEV-PROD): CRUD Productos y Categorías
+| Bloque 4 (DEV-PROD): CRUD Productos y Categorías
 |--------------------------------------------------------------------------
-|
-| Vistas CRUD: @extends('layouts.admin')
-| Layout pendiente de integración con DEV-DASH.
-| Ver: docs/DEV-PROD-INTEGRACION.md
-|
 */
 Route::middleware('auth')
     ->prefix('admin')
