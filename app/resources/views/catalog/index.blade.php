@@ -152,4 +152,8 @@
         @endif
     @endif
 </div>
+
+@if($openProductSlug ?? null)
+<script>window.__SC_OPEN_PRODUCT__ = @json($openProductSlug);</script>
+@endif
 @endsection

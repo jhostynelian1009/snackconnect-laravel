@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Carrito de Compras - SnackConnect</title>
     
     <!-- Fonts -->
@@ -59,9 +60,29 @@
             </div>
             
             <div class="flex items-center gap-4">
-                <a href="/" class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors">
-                    Inicio
+                <a href="{{ route('catalogo.index') }}" class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors">
+                    Catálogo
                 </a>
+                @auth
+                    @if(auth()->user()->isClient())
+                        <a href="{{ route('client.dashboard') }}" class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors">
+                            Mi cuenta
+                        </a>
+                    @endif
+                    <form action="{{ route('logout') }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors cursor-pointer">
+                            Salir
+                        </button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="text-sm font-medium text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-white transition-colors">
+                        Iniciar sesión
+                    </a>
+                    <a href="{{ route('register') }}" class="text-sm font-medium text-[#f53003] dark:text-[#FF4433] hover:underline">
+                        Registrarse
+                    </a>
+                @endauth
                 <span class="h-4 w-px bg-[#e3e3e0] dark:border-[#3E3E3A]"></span>
                 <span class="relative inline-flex items-center bg-[#fff2f2] dark:bg-[#1D0002] text-[#f53003] dark:text-[#FF4433] px-3 py-1 rounded-full text-xs font-semibold">
                     Checkout WhatsApp
@@ -103,6 +124,14 @@
                                 {{ count($cart) }} {{ count($cart) === 1 ? 'item' : 'items' }}
                             </span>
                         </h2>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('catalogo.index') }}"
+                               class="text-sm font-semibold text-[#1b1b18] dark:text-white border border-[#e3e3e0] dark:border-[#3E3E3A] px-3 py-1.5 rounded-full hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors inline-flex items-center gap-1.5">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                </svg>
+                                Seguir agregando
+                            </a>
                         @if(count($cart) > 0)
                             <form action="{{ route('cart.clear') }}" method="POST">
                                 @csrf
@@ -111,14 +140,28 @@
                                 </button>
                             </form>
                         @endif
+                        </div>
                     </div>
 
                     @if(count($cart) > 0)
                         <div class="divide-y divide-[#e3e3e0] dark:divide-[#3E3E3A]">
                             @foreach($cart as $id => $item)
+                                @php
+                                    $cartImageUrl = ! empty($item['image']) ? asset('storage/'.$item['image']) : null;
+                                @endphp
                                 <div class="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                     <div class="flex items-center gap-4">
-                                        <img src="{{ $item['image'] }}" alt="{{ $item['name'] }}" class="h-16 w-16 rounded-xl object-cover border border-[#e3e3e0] dark:border-[#3E3E3A]" />
+                                        @if ($cartImageUrl)
+                                            <span class="sc-cart-thumb" title="{{ $item['name'] }}">
+                                                <img src="{{ $cartImageUrl }}" alt="{{ $item['name'] }}" loading="lazy">
+                                            </span>
+                                        @else
+                                            <span class="sc-cart-thumb sc-cart-thumb--placeholder" title="{{ $item['name'] }}">
+                                                <svg class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/>
+                                                </svg>
+                                            </span>
+                                        @endif
                                         <div>
                                             <h3 class="font-semibold text-base text-[#1b1b18] dark:text-white">{{ $item['name'] }}</h3>
                                             <p class="text-sm text-[#706f6c] dark:text-[#A1A09A]">${{ number_format($item['price'], 2) }} c/u</p>
@@ -137,7 +180,7 @@
                                                 <button type="submit" class="h-7 w-7 rounded-full flex items-center justify-center text-sm font-bold text-[#706f6c] hover:bg-[#e3e3e0] dark:hover:bg-[#3E3E3A] cursor-pointer">&minus;</button>
                                             </form>
                                             <span class="px-2 font-semibold text-sm">{{ $item['quantity'] }}</span>
-                                            <form action="{{ route('cart.add', $id) }}" method="POST">
+                                            <form action="{{ route('cart.add', $id) }}" method="POST" class="js-cart-add-form">
                                                 @csrf
                                                 <button type="submit" class="h-7 w-7 rounded-full flex items-center justify-center text-sm font-bold text-[#706f6c] hover:bg-[#e3e3e0] dark:hover:bg-[#3E3E3A] cursor-pointer">&plus;</button>
                                             </form>
@@ -155,20 +198,40 @@
                                 </svg>
                             </div>
                             <h3 class="text-lg font-semibold mb-1">El carrito está vacío</h3>
-                            <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm mb-6 max-w-md mx-auto">Selecciona tus snacks favoritos del catálogo interactivo de abajo para agregarlos al carrito temporal.</p>
+                            <p class="text-[#706f6c] dark:text-[#A1A09A] text-sm mb-6 max-w-md mx-auto">Explora el catálogo y agrega tus snacks favoritos al carrito.</p>
+                            <a href="{{ route('catalogo.index') }}"
+                               class="primary-btn inline-flex items-center gap-2 text-white text-sm font-semibold px-5 py-2.5 rounded-full">
+                                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 0 0-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 0 0-16.536-1.84M7.5 14.25 5.106 5.272M6 20.25a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Zm12.75 0a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                                </svg>
+                                Ir al catálogo
+                            </a>
                         </div>
                     @endif
                 </div>
 
                 <!-- Mock Catalog Section (For DX testing) -->
                 <div class="bg-white dark:bg-[#161615] rounded-2xl border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 shadow-sm">
-                    <h2 class="text-xl font-bold text-[#1b1b18] dark:text-white mb-2">Catálogo de Snacks (Mock Temporal)</h2>
-                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-6">Agrega snacks para simular la compra antes de integrarlo con la base de datos.</p>
+                    <h2 class="text-xl font-bold text-[#1b1b18] dark:text-white mb-2">Agregar más snacks</h2>
+                    <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-6">Explora el catálogo y añade más productos a tu pedido.</p>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         @foreach($products as $product)
+                            @php
+                                $productImageUrl = ! empty($product['image']) ? asset('storage/'.$product['image']) : null;
+                            @endphp
                             <div class="border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-xl p-4 flex gap-4 hover:shadow-md transition-all">
-                                <img src="{{ $product['image'] }}" alt="{{ $product['name'] }}" class="h-20 w-20 rounded-lg object-cover bg-gray-100" />
+                                @if ($productImageUrl)
+                                    <span class="sc-cart-thumb sc-cart-thumb--sm shrink-0" title="{{ $product['name'] }}">
+                                        <img src="{{ $productImageUrl }}" alt="{{ $product['name'] }}" loading="lazy">
+                                    </span>
+                                @else
+                                    <span class="sc-cart-thumb sc-cart-thumb--sm sc-cart-thumb--placeholder shrink-0" title="{{ $product['name'] }}">
+                                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/>
+                                        </svg>
+                                    </span>
+                                @endif
                                 <div class="flex-1 flex flex-col justify-between">
                                     <div>
                                         <h4 class="font-bold text-sm text-[#1b1b18] dark:text-white">{{ $product['name'] }}</h4>
@@ -176,7 +239,7 @@
                                     </div>
                                     <div class="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-zinc-800">
                                         <span class="font-extrabold text-sm text-[#f53003] dark:text-[#FF4433]">${{ number_format($product['price'], 2) }}</span>
-                                        <form action="{{ route('cart.add', $product['id']) }}" method="POST">
+                                        <form action="{{ route('cart.add', $product['id']) }}" method="POST" class="js-cart-add-form">
                                             @csrf
                                             <button type="submit" class="primary-btn text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1 cursor-pointer">
                                                 <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -198,6 +261,30 @@
             <div class="space-y-6">
                 <div class="bg-white dark:bg-[#161615] rounded-2xl border border-[#e3e3e0] dark:border-[#3E3E3A] p-6 shadow-sm sticky top-24">
                     <h3 class="text-lg font-bold text-[#1b1b18] dark:text-white mb-4">Resumen del Pedido</h3>
+
+                    @if(count($cart) > 0)
+                        <div class="sc-cart-summary-thumbs">
+                            @foreach($cart as $item)
+                                @php
+                                    $summaryImageUrl = ! empty($item['image']) ? asset('storage/'.$item['image']) : null;
+                                @endphp
+                                <div class="sc-cart-summary-thumb-item" title="{{ $item['name'] }} × {{ $item['quantity'] }}">
+                                    @if ($summaryImageUrl)
+                                        <span class="sc-cart-thumb sc-cart-thumb--sm">
+                                            <img src="{{ $summaryImageUrl }}" alt="{{ $item['name'] }}" loading="lazy">
+                                        </span>
+                                    @else
+                                        <span class="sc-cart-thumb sc-cart-thumb--sm sc-cart-thumb--placeholder">
+                                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 21h16.5A2.25 2.25 0 0 0 22.5 18.75V5.25A2.25 2.25 0 0 0 20.25 3H3.75A2.25 2.25 0 0 0 1.5 5.25v13.5A2.25 2.25 0 0 0 3.75 21Z"/>
+                                            </svg>
+                                        </span>
+                                    @endif
+                                    <span class="sc-cart-summary-thumb-qty">{{ $item['quantity'] }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
                     
                     <div class="space-y-3 mb-6">
                         <div class="flex justify-between text-sm">
@@ -216,21 +303,21 @@
                     </div>
 
                     @if(count($cart) > 0)
+                        @auth
+                            @if(auth()->user()->isClient())
+                        @php
+                            $client = auth()->user();
+                            $savedDelivery = old('delivery_type', $client->default_delivery_type ?? 'llevar');
+                        @endphp
                         <!-- Form to process checkout -->
+                        <div class="mb-4 p-4 rounded-xl bg-[#fff2f2] dark:bg-[#1D0002] border border-[#e3e3e0] dark:border-[#3E3E3A]">
+                            <p class="text-xs font-semibold text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider mb-1">Comprando como</p>
+                            <p class="text-sm font-semibold text-[#1b1b18] dark:text-white">{{ auth()->user()->name }}</p>
+                            <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">{{ auth()->user()->email }} · {{ auth()->user()->phone }}</p>
+                        </div>
+
                         <form action="{{ route('checkout.whatsapp') }}" method="POST" class="space-y-4">
                             @csrf
-                            
-                            <div>
-                                <label for="customer_name" class="block text-xs font-semibold text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider mb-2">
-                                    Nombre Completo *
-                                </label>
-                                <input type="text" id="customer_name" name="customer_name" value="{{ old('customer_name') }}" placeholder="Ej. Jhostyn Baños" 
-                                       class="w-full px-4 py-3 rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-transparent focus:outline-none focus:ring-2 focus:ring-[#f53003] text-sm" 
-                                       required />
-                                @error('customer_name')
-                                    <p class="text-xs text-[#f53003] mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
 
                             <div>
                                 <label class="block text-xs font-semibold text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider mb-2">
@@ -238,17 +325,80 @@
                                 </label>
                                 <div class="grid grid-cols-2 gap-3">
                                     <label class="border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-xl p-3 flex flex-col items-center gap-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                                        <input type="radio" name="delivery_type" value="llevar" class="accent-[#f53003]" checked />
+                                        <input type="radio" name="delivery_type" value="llevar" class="accent-[#f53003]" {{ $savedDelivery === 'llevar' ? 'checked' : '' }} />
                                         <span class="text-xs font-medium mt-1">Para Llevar</span>
                                     </label>
                                     <label class="border border-[#e3e3e0] dark:border-[#3E3E3A] rounded-xl p-3 flex flex-col items-center gap-1 cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
-                                        <input type="radio" name="delivery_type" value="local" class="accent-[#f53003]" />
+                                        <input type="radio" name="delivery_type" value="local" class="accent-[#f53003]" {{ $savedDelivery === 'local' ? 'checked' : '' }} />
                                         <span class="text-xs font-medium mt-1">Consumo Local</span>
                                     </label>
                                 </div>
                                 @error('delivery_type')
                                     <p class="text-xs text-[#f53003] mt-1">{{ $message }}</p>
                                 @enderror
+                            </div>
+
+                            <div id="delivery-address-fields" class="space-y-4 {{ $savedDelivery === 'local' ? 'hidden' : '' }}">
+                                <div class="flex items-center justify-between gap-2">
+                                    <p class="text-xs font-semibold text-[#706f6c] dark:text-[#A1A09A] uppercase tracking-wider">
+                                        Dirección de entrega *
+                                    </p>
+                                    <a href="{{ route('client.perfil.edit') }}" class="text-xs font-medium text-[#f53003] dark:text-[#FF4433] hover:underline shrink-0">
+                                        Editar en perfil
+                                    </a>
+                                </div>
+
+                                @if(!$client->hasSavedDeliveryAddress() && $savedDelivery === 'llevar')
+                                    <p class="text-xs text-[#706f6c] dark:text-[#A1A09A]">
+                                        Guarda tu dirección en
+                                        <a href="{{ route('client.perfil.edit') }}" class="text-[#f53003] dark:text-[#FF4433] font-medium hover:underline">Editar perfil</a>
+                                        para no escribirla en cada pedido.
+                                    </p>
+                                @endif
+
+                                <div>
+                                    <label for="address_neighborhood" class="block text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] mb-1.5">
+                                        Barrio
+                                    </label>
+                                    <input type="text" id="address_neighborhood" name="address_neighborhood" value="{{ old('address_neighborhood', $client->address_neighborhood) }}" placeholder="Ej. La Floresta"
+                                           class="w-full px-4 py-3 rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-transparent focus:outline-none focus:ring-2 focus:ring-[#f53003] text-sm" />
+                                    @error('address_neighborhood')
+                                        <p class="text-xs text-[#f53003] mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="address_main_street" class="block text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] mb-1.5">
+                                        Calle principal
+                                    </label>
+                                    <input type="text" id="address_main_street" name="address_main_street" value="{{ old('address_main_street', $client->address_main_street) }}" placeholder="Ej. Av. de los Shyris"
+                                           class="w-full px-4 py-3 rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-transparent focus:outline-none focus:ring-2 focus:ring-[#f53003] text-sm" />
+                                    @error('address_main_street')
+                                        <p class="text-xs text-[#f53003] mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="address_secondary_street" class="block text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] mb-1.5">
+                                        Calle secundaria
+                                    </label>
+                                    <input type="text" id="address_secondary_street" name="address_secondary_street" value="{{ old('address_secondary_street', $client->address_secondary_street) }}" placeholder="Ej. Calle El Universo"
+                                           class="w-full px-4 py-3 rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-transparent focus:outline-none focus:ring-2 focus:ring-[#f53003] text-sm" />
+                                    @error('address_secondary_street')
+                                        <p class="text-xs text-[#f53003] mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
+
+                                <div>
+                                    <label for="address_reference" class="block text-xs font-medium text-[#706f6c] dark:text-[#A1A09A] mb-1.5">
+                                        Referencia o número de casa
+                                    </label>
+                                    <input type="text" id="address_reference" name="address_reference" value="{{ old('address_reference', $client->address_reference) }}" placeholder="Ej. Casa blanca, portón negro / Nº 24-15"
+                                           class="w-full px-4 py-3 rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-transparent focus:outline-none focus:ring-2 focus:ring-[#f53003] text-sm" />
+                                    @error('address_reference')
+                                        <p class="text-xs text-[#f53003] mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
 
                             <!-- Checkout via WhatsApp button -->
@@ -259,6 +409,42 @@
                                 Comprar por WhatsApp
                             </button>
                         </form>
+
+                        <a href="{{ route('catalogo.index') }}"
+                           class="w-full mt-3 border border-[#e3e3e0] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center gap-2 hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Seguir agregando productos
+                        </a>
+                            @else
+                        <div class="p-4 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800 text-sm text-amber-900 dark:text-amber-200">
+                            <p class="font-semibold mb-1">Sesión de administrador</p>
+                            <p>Para comprar debes iniciar sesión como <strong>cliente</strong> o crear una cuenta de cliente.</p>
+                            <div class="flex flex-col gap-2 mt-4">
+                                <form action="{{ route('logout') }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="w-full border border-[#e3e3e0] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors cursor-pointer">
+                                        Cerrar sesión de admin
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                            @endif
+                        @else
+                        <div class="p-4 rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#fff2f2] dark:bg-[#1D0002] text-sm">
+                            <p class="font-semibold text-[#1b1b18] dark:text-white mb-1">Inicia sesión para comprar</p>
+                            <p class="text-[#706f6c] dark:text-[#A1A09A] mb-4">Solo los clientes registrados pueden confirmar un pedido por WhatsApp.</p>
+                            <div class="flex flex-col gap-2">
+                                <a href="{{ route('login') }}" class="w-full primary-btn text-white font-bold py-3 px-4 rounded-xl flex items-center justify-center">
+                                    Iniciar sesión
+                                </a>
+                                <a href="{{ route('register') }}" class="w-full border border-[#e3e3e0] dark:border-[#3E3E3A] text-[#1b1b18] dark:text-white font-semibold py-3 px-4 rounded-xl flex items-center justify-center hover:bg-gray-50 dark:hover:bg-zinc-800/30 transition-colors">
+                                    Crear cuenta de cliente
+                                </a>
+                            </div>
+                        </div>
+                        @endauth
                     @else
                         <!-- Disabled form representation when empty -->
                         <div class="space-y-4">
@@ -288,9 +474,31 @@
     <!-- Footer -->
     <footer class="border-t border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#161615] mt-12 py-8">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm text-[#706f6c] dark:text-[#A1A09A]">
-            <p>&copy; 2026 SnackConnect. Desarrollado con &hearts; por Jhostyn Baños.</p>
+            <p>&copy; {{ date('Y') }} SnackConnect. Todos los derechos reservados. Hecho por Estudiantes Del ISTAE.</p>
         </div>
     </footer>
+
+    <script>
+        (function () {
+            const addressFields = document.getElementById('delivery-address-fields');
+            const deliveryRadios = document.querySelectorAll('input[name="delivery_type"]');
+            if (!addressFields || !deliveryRadios.length) return;
+
+            function toggleAddressFields() {
+                const isDelivery = document.querySelector('input[name="delivery_type"]:checked')?.value === 'llevar';
+                addressFields.classList.toggle('hidden', !isDelivery);
+                addressFields.querySelectorAll('input').forEach(function (input) {
+                    input.toggleAttribute('required', isDelivery);
+                });
+            }
+
+            deliveryRadios.forEach(function (radio) {
+                radio.addEventListener('change', toggleAddressFields);
+            });
+
+            toggleAddressFields();
+        })();
+    </script>
 
 </body>
 </html>

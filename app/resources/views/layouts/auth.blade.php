@@ -82,6 +82,40 @@
             cursor: not-allowed;
         }
 
+        .btn-secondary {
+            background-color: var(--color-bg-surface);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border-default);
+            border-radius: var(--radius-sm);
+            font-weight: 500;
+            transition: background-color 150ms ease-in-out, border-color 150ms ease-in-out;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        .btn-secondary:hover {
+            background-color: var(--color-bg-muted);
+            border-color: var(--color-border-strong);
+        }
+
+        .auth-back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--color-text-secondary);
+            text-decoration: none;
+            margin-bottom: 1.5rem;
+            transition: color 150ms ease-in-out;
+        }
+        .auth-back-link:hover {
+            color: var(--color-brand-primary);
+        }
+
         .input-field {
             background-color: var(--color-bg-surface);
             border: 1px solid var(--color-border-default);
@@ -147,6 +181,13 @@
                     </div>
                     <span class="brand-text text-xl">SnackConnect</span>
                 </div>
+
+                <a href="{{ route('catalogo.index') }}" class="auth-back-link">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                    </svg>
+                    Volver al catálogo
+                </a>
                 
                 @yield('content')
             </div>

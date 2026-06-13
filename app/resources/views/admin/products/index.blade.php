@@ -31,6 +31,14 @@
                 </thead>
                 <tbody>
                     @forelse ($products as $product)
+                        @php
+                            $actionData = [
+                                'Producto' => $product->name,
+                                'Categoría' => $product->category?->name ?? '—',
+                                'Precio' => '$'.number_format($product->price, 2),
+                                'Estado' => $product->is_active ? 'Activo' : 'Inactivo',
+                            ];
+                        @endphp
                         <tr class="{{ $loop->even ? 'bg-[#FDFDFC] dark:bg-[#0a0a0a]' : 'bg-white dark:bg-[#161615]' }} border-b border-[#e3e3e0] hover:bg-[rgba(245,48,3,0.04)] dark:border-[#3E3E3A]">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
@@ -60,15 +68,22 @@
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-3">
-                                    <a href="{{ route('admin.productos.edit', $product) }}"
-                                        class="text-sm font-medium text-[#1b1b18] underline-offset-4 hover:underline dark:text-[#EDEDEC]">Editar</a>
-                                    <form action="{{ route('admin.productos.destroy', $product) }}" method="POST"
-                                        onsubmit="return confirm('¿Eliminar este producto?');">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                            class="text-sm font-medium text-[#F53003] underline-offset-4 hover:underline">Eliminar</button>
-                                    </form>
+                                    <button type="button"
+                                        data-sc-action-open="edit"
+                                        data-sc-action-url="{{ route('admin.productos.edit', $product) }}"
+                                        data-sc-action-title="Editar producto"
+                                        data-sc-action-data='@json($actionData)'
+                                        class="text-sm font-medium text-[#1b1b18] underline-offset-4 hover:underline dark:text-[#EDEDEC]">
+                                        Editar
+                                    </button>
+                                    <button type="button"
+                                        data-sc-action-open="delete"
+                                        data-sc-action-url="{{ route('admin.productos.destroy', $product) }}"
+                                        data-sc-action-title="Eliminar producto"
+                                        data-sc-action-data='@json($actionData)'
+                                        class="text-sm font-medium text-[#F53003] underline-offset-4 hover:underline">
+                                        Eliminar
+                                    </button>
                                 </div>
                             </td>
                         </tr>

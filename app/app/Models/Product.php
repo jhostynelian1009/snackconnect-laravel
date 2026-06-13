@@ -35,6 +35,22 @@ class Product extends Model
         ];
     }
 
+    /**
+     * Alias usado por las vistas públicas del catálogo.
+     */
+    public function getImagePathAttribute(): ?string
+    {
+        return $this->image;
+    }
+
+    /**
+     * Estado legible para el catálogo público (active / inactive).
+     */
+    public function getStatusAttribute(): string
+    {
+        return $this->is_active ? 'active' : 'inactive';
+    }
+
     protected static function booted(): void
     {
         static::saving(function (Product $product): void {

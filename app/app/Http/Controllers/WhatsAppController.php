@@ -2,72 +2,77 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Models\OrderItem;
+use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 
 class WhatsAppController extends Controller
 {
     /**
-     * Mock products array. Ready to be replaced by Product::all() in future integration.
+     * Resuelve un producto activo desde la base de datos.
      */
-    private array $mockProducts = [
-        1 => [
-            'id' => 1, 
-            'name' => 'Muffin de Chocolate', 
-            'price' => 3.00, 
-            'description' => 'Esponjoso muffin con chispas de chocolate semi-amargo.', 
-            'image' => 'https://images.unsplash.com/photo-1607958996333-41aef7caefaa?w=500&auto=format&fit=crop&q=60'
-        ],
-        2 => [
-            'id' => 2, 
-            'name' => 'Té Verde Orgánico', 
-            'price' => 2.00, 
-            'description' => 'Refrescante té verde natural con hojas seleccionadas.', 
-            'image' => 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?w=500&auto=format&fit=crop&q=60'
-        ],
-        3 => [
-            'id' => 3, 
-            'name' => 'Snack de Papas Nativas', 
-            'price' => 1.50, 
-            'description' => 'Crujientes papas fritas artesanales con sal marina.', 
-            'image' => 'https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500&auto=format&fit=crop&q=60'
-        ],
-        4 => [
-            'id' => 4, 
-            'name' => 'Galleta de Avena y Miel', 
-            'price' => 1.80, 
-            'description' => 'Galleta horneada con avena integral y miel de abeja pura.', 
-            'image' => 'https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?w=500&auto=format&fit=crop&q=60'
-        ],
-        5 => [
-            'id' => 5, 
-            'name' => 'Café Americano', 
-            'price' => 2.50, 
-            'description' => 'Café expreso diluido en agua caliente, granos de altura.', 
-            'image' => 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=500&auto=format&fit=crop&q=60'
-        ]
-    ];
+    private function resolveProduct(int $id): ?array
+    {
+        $product = Product::query()->find($id);
+
+        if (! $product || ! $product->is_active) {
+            return null;
+        }
+
+        return [
+            'id' => $product->id,
+            'name' => $product->name,
+            'price' => (float) $product->price,
+            'image' => $product->image,
+            'description' => $product->description,
+        ];
+    }
 
     /**
-     * Show the temporary cart page with items and mock products catalog.
+     * Lista de productos activos para el carrito.
+     */
+    private function availableProducts(): array
+    {
+        return Product::query()
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get()
+            ->mapWithKeys(fn (Product $product) => [
+                $product->id => [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'price' => (float) $product->price,
+                    'image' => $product->image,
+                    'description' => $product->description,
+                ],
+            ])->all();
+    }
+
+    private function whatsappPhone(): string
+    {
+        return config('services.whatsapp.phone', '593998128034');
+    }
+
+    /**
+     * Show the temporary cart page with items and products catalog.
      */
     public function showCart()
     {
         $cart = Session::get('cart', []);
-        
-        // Calculate subtotal, taxes, and total
-        $subtotal = 0;
+
+        $total = 0;
         foreach ($cart as $item) {
-            $subtotal += $item['price'] * $item['quantity'];
+            $total += $item['price'] * $item['quantity'];
         }
-        
-        $total = $subtotal;
 
         return view('cart', [
             'cart' => $cart,
-            'products' => $this->mockProducts,
+            'products' => $this->availableProducts(),
             'total' => $total,
-            'whatsappPhone' => env('WHATSAPP_PHONE', '59398920065')
+            'whatsappPhone' => $this->whatsappPhone(),
         ]);
     }
 
@@ -76,12 +81,20 @@ class WhatsAppController extends Controller
      */
     public function addToCart(Request $request, $id)
     {
-        $id = (int)$id;
-        if (!array_key_exists($id, $this->mockProducts)) {
-            return redirect()->route('cart.show')->with('error', 'Producto no encontrado.');
+        $id = (int) $id;
+        $product = $this->resolveProduct($id);
+
+        if (! $product) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Producto no encontrado.',
+                ], 404);
+            }
+
+            return redirect()->back()->with('error', 'Producto no encontrado.');
         }
 
-        $product = $this->mockProducts[$id];
         $cart = Session::get('cart', []);
 
         if (isset($cart[$id])) {
@@ -92,13 +105,36 @@ class WhatsAppController extends Controller
                 'name' => $product['name'],
                 'price' => $product['price'],
                 'image' => $product['image'],
-                'quantity' => 1
+                'quantity' => 1,
             ];
         }
 
         Session::put('cart', $cart);
 
-        return redirect()->route('cart.show')->with('success', "{$product['name']} agregado al carrito.");
+        if ($request->boolean('whatsapp_redirect')) {
+            return redirect()->route('cart.show')
+                ->with('success', "{$product['name']} agregado. Completa tu pedido por WhatsApp.");
+        }
+
+        $toastMessage = "«{$product['name']}» se añadió al carrito.";
+        $cartCount = array_sum(array_column($cart, 'quantity'));
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => $toastMessage,
+                'cart_count' => $cartCount,
+                'product' => $product['name'],
+            ]);
+        }
+
+        return redirect()
+            ->back()
+            ->with('cart_toast', [
+                'type' => 'success',
+                'message' => $toastMessage,
+                'product' => $product['name'],
+            ]);
     }
 
     /**
@@ -106,7 +142,7 @@ class WhatsAppController extends Controller
      */
     public function removeFromCart(Request $request, $id)
     {
-        $id = (int)$id;
+        $id = (int) $id;
         $cart = Session::get('cart', []);
 
         if (isset($cart[$id])) {
@@ -131,6 +167,7 @@ class WhatsAppController extends Controller
     public function clearCart()
     {
         Session::forget('cart');
+
         return redirect()->route('cart.show')->with('success', 'Carrito vaciado exitosamente.');
     }
 
@@ -139,12 +176,20 @@ class WhatsAppController extends Controller
      */
     public function checkoutWhatsApp(Request $request)
     {
+        $user = $request->user();
+
         $request->validate([
-            'customer_name' => 'required|string|max:100',
-            'delivery_type' => 'required|in:llevar,local'
+            'delivery_type' => 'required|in:llevar,local',
+            'address_neighborhood' => 'required_if:delivery_type,llevar|nullable|string|max:100',
+            'address_main_street' => 'required_if:delivery_type,llevar|nullable|string|max:150',
+            'address_secondary_street' => 'required_if:delivery_type,llevar|nullable|string|max:150',
+            'address_reference' => 'required_if:delivery_type,llevar|nullable|string|max:150',
         ], [
-            'customer_name.required' => 'El nombre es obligatorio para procesar el pedido.',
-            'delivery_type.required' => 'Debe seleccionar el tipo de entrega.'
+            'delivery_type.required' => 'Debe seleccionar el tipo de entrega.',
+            'address_neighborhood.required_if' => 'Indique el barrio de entrega.',
+            'address_main_street.required_if' => 'Indique la calle principal.',
+            'address_secondary_street.required_if' => 'Indique la calle secundaria.',
+            'address_reference.required_if' => 'Indique una referencia o número de casa.',
         ]);
 
         $cart = Session::get('cart', []);
@@ -153,39 +198,101 @@ class WhatsAppController extends Controller
             return redirect()->route('cart.show')->with('error', 'El carrito está vacío. Agregue algunos snacks antes de comprar.');
         }
 
-        // Calculate total
-        $total = 0;
-        $itemsText = "";
+        $subtotal = 0;
+        $itemsText = '';
+
         foreach ($cart as $item) {
             $itemTotal = $item['price'] * $item['quantity'];
-            $total += $itemTotal;
-            $itemsText .= "- {$item['quantity']}x {$item['name']} ($" . number_format($item['price'], 2) . " c/u)\n";
+            $subtotal += $itemTotal;
+            $itemsText .= "- {$item['quantity']}x {$item['name']} ($".number_format($item['price'], 2)." c/u)\n";
         }
 
-        // Format delivery label
         $deliveryLabel = $request->delivery_type === 'llevar' ? 'Para Llevar / Delivery' : 'Consumo Local';
 
-        // WhatsApp message construction using Markdown
+        $order = DB::transaction(function () use ($user, $request, $cart, $subtotal) {
+            $order = Order::query()->create([
+                'order_number' => Order::generateOrderNumber(),
+                'user_id' => $user->id,
+                'customer_name' => $user->name,
+                'customer_email' => $user->email,
+                'customer_phone' => $user->phone,
+                'delivery_type' => $request->delivery_type,
+                'address_neighborhood' => $request->address_neighborhood,
+                'address_main_street' => $request->address_main_street,
+                'address_secondary_street' => $request->address_secondary_street,
+                'address_reference' => $request->address_reference,
+                'subtotal' => $subtotal,
+                'total' => $subtotal,
+                'status' => 'sent',
+                'whatsapp_sent_at' => now(),
+            ]);
+
+            foreach ($cart as $productId => $item) {
+                OrderItem::query()->create([
+                    'order_id' => $order->id,
+                    'product_id' => (int) $productId,
+                    'product_name' => $item['name'],
+                    'product_price' => $item['price'],
+                    'quantity' => $item['quantity'],
+                    'line_total' => $item['price'] * $item['quantity'],
+                ]);
+            }
+
+            return $order;
+        });
+
+        $user->update([
+            'default_delivery_type' => $request->delivery_type,
+            'address_neighborhood' => $request->delivery_type === 'llevar' ? $request->address_neighborhood : null,
+            'address_main_street' => $request->delivery_type === 'llevar' ? $request->address_main_street : null,
+            'address_secondary_street' => $request->delivery_type === 'llevar' ? $request->address_secondary_street : null,
+            'address_reference' => $request->delivery_type === 'llevar' ? $request->address_reference : null,
+        ]);
+
         $message = "*¡Hola! Me gustaría hacer el siguiente pedido en SnackConnect:*\n";
+        $message .= '*Pedido:* '.$order->order_number."\n";
         $message .= "---------------------------------\n";
         $message .= $itemsText;
         $message .= "---------------------------------\n";
-        $message .= "*Total:* $" . number_format($total, 2) . "\n";
-        $message .= "*Cliente:* " . trim($request->customer_name) . "\n";
-        $message .= "*Entrega:* " . $deliveryLabel . "\n";
+        $message .= '*Total:* $'.number_format($subtotal, 2)."\n";
+        $message .= '*Cliente:* '.$user->name."\n";
+        $message .= '*Correo:* '.$user->email."\n";
+        $message .= '*Teléfono:* '.($user->phone ?? '—')."\n";
+        $message .= '*Cédula/ID:* '.($user->document_number ?? '—')."\n";
+        $message .= '*Entrega:* '.$deliveryLabel."\n";
 
-        // Get WhatsApp Phone Number
-        $phone = env('WHATSAPP_PHONE', '59398920065');
-        
-        // Clean phone number: remove spaces, dashes, plus sign, etc.
-        $cleanPhone = preg_replace('/[^0-9]/', '', $phone);
+        if ($request->delivery_type === 'llevar') {
+            $message .= "\n*Dirección de entrega:*\n";
+            $message .= '- Barrio: '.trim($request->address_neighborhood)."\n";
+            $message .= '- Calle principal: '.trim($request->address_main_street)."\n";
+            $message .= '- Calle secundaria: '.trim($request->address_secondary_street)."\n";
+            $message .= '- Referencia: '.trim($request->address_reference)."\n";
+        }
 
-        // Clear cart session immediately as per RN-03/spec/modulos/whatsapp.md
+        $cleanPhone = preg_replace('/[^0-9]/', '', $this->whatsappPhone());
         Session::forget('cart');
+        $whatsappUrl = 'https://api.whatsapp.com/send?phone='.$cleanPhone.'&text='.urlencode($message);
 
-        // Generate redirect link
-        $whatsappUrl = "https://api.whatsapp.com/send?phone=" . $cleanPhone . "&text=" . urlencode($message);
+        return redirect()
+            ->route('checkout.success')
+            ->with('whatsapp_redirect_url', $whatsappUrl)
+            ->with('order_number', $order->order_number);
+    }
 
-        return redirect()->away($whatsappUrl);
+    /**
+     * Página de confirmación: muestra éxito y redirige a WhatsApp.
+     */
+    public function orderSuccess()
+    {
+        $whatsappUrl = session('whatsapp_redirect_url');
+
+        if (! $whatsappUrl) {
+            return redirect()->route('cart.show');
+        }
+
+        return view('checkout.success', [
+            'whatsappUrl' => $whatsappUrl,
+            'orderNumber' => session('order_number'),
+        ]);
     }
 }

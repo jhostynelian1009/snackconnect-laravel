@@ -2,14 +2,33 @@
 
 namespace Tests\Feature;
 
+use App\Models\Product;
+use App\Models\User;
+use Database\Seeders\CategorySeeder;
+use Database\Seeders\ProductSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Session;
 use Tests\TestCase;
 
 class WhatsAppCheckoutTest extends TestCase
 {
-    /**
-     * Test the cart page loads and displays products.
-     */
+    use RefreshDatabase;
+
+    private Product $muffin;
+
+    private User $client;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(CategorySeeder::class);
+        $this->seed(ProductSeeder::class);
+
+        $this->muffin = Product::query()->where('slug', 'muffin-de-chocolate')->firstOrFail();
+        $this->client = User::factory()->client()->create();
+    }
+
     public function test_cart_page_loads_successfully()
     {
         $response = $this->get(route('cart.show'));
@@ -19,113 +38,156 @@ class WhatsAppCheckoutTest extends TestCase
         $response->assertSee('Muffin de Chocolate');
     }
 
-    /**
-     * Test adding an item to the session cart.
-     */
-    public function test_add_item_to_cart()
+    public function test_add_item_to_cart_via_json()
     {
-        // Add product with ID 1
-        $response = $this->post(route('cart.add', 1));
+        $response = $this->from(route('catalogo.index'))
+            ->withHeaders(['Accept' => 'application/json'])
+            ->post(route('cart.add', $this->muffin->id));
 
-        $response->assertRedirect(route('cart.show'));
-        $response->assertSessionHas('cart');
-        
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'cart_count' => 1,
+        ]);
+
         $cart = Session::get('cart');
-        $this->assertArrayHasKey(1, $cart);
-        $this->assertEquals(1, $cart[1]['quantity']);
+        $this->assertArrayHasKey($this->muffin->id, $cart);
+        $this->assertEquals(1, $cart[$this->muffin->id]['quantity']);
     }
 
-    /**
-     * Test decreasing item quantity in the session cart.
-     */
+    public function test_add_item_to_cart()
+    {
+        $response = $this->from(route('catalogo.index'))
+            ->post(route('cart.add', $this->muffin->id));
+
+        $response->assertRedirect(route('catalogo.index'));
+        $response->assertSessionHas('cart');
+        $response->assertSessionHas('cart_toast');
+    }
+
     public function test_remove_or_decrease_item_in_cart()
     {
-        // Setup cart session with quantity of 2
         $cart = [
-            1 => [
-                'id' => 1,
+            $this->muffin->id => [
+                'id' => $this->muffin->id,
                 'name' => 'Muffin de Chocolate',
-                'price' => 3.00,
-                'image' => 'muffin.jpg',
-                'quantity' => 2
-            ]
+                'price' => 3.50,
+                'image' => 'products/muffin-de-chocolate.jpg',
+                'quantity' => 2,
+            ],
         ];
         Session::put('cart', $cart);
 
-        // Decrease quantity (from 2 to 1)
-        $response = $this->post(route('cart.remove', 1));
-
+        $response = $this->post(route('cart.remove', $this->muffin->id));
         $response->assertRedirect(route('cart.show'));
         $updatedCart = Session::get('cart');
-        $this->assertEquals(1, $updatedCart[1]['quantity']);
+        $this->assertEquals(1, $updatedCart[$this->muffin->id]['quantity']);
 
-        // Remove item completely (from 1 to 0)
-        $response = $this->post(route('cart.remove', 1));
+        $response = $this->post(route('cart.remove', $this->muffin->id));
         $finalCart = Session::get('cart');
-        $this->assertArrayNotHasKey(1, $finalCart);
+        $this->assertArrayNotHasKey($this->muffin->id, $finalCart);
     }
 
-    /**
-     * Test clearing the entire session cart.
-     */
     public function test_clear_cart()
     {
+        $tea = Product::query()->where('slug', 'te-helado-de-durazno')->firstOrFail();
+
         $cart = [
-            1 => ['id' => 1, 'name' => 'Muffin de Chocolate', 'price' => 3.00, 'image' => 'muff.jpg', 'quantity' => 1],
-            2 => ['id' => 2, 'name' => 'Té Verde Orgánico', 'price' => 2.00, 'image' => 'tea.jpg', 'quantity' => 3]
+            $this->muffin->id => ['id' => $this->muffin->id, 'name' => 'Muffin de Chocolate', 'price' => 3.50, 'image' => 'products/muffin-de-chocolate.jpg', 'quantity' => 1],
+            $tea->id => ['id' => $tea->id, 'name' => 'Té Helado de Durazno', 'price' => 3.00, 'image' => 'products/te-helado-de-durazno.jpg', 'quantity' => 3],
         ];
         Session::put('cart', $cart);
 
         $response = $this->post(route('cart.clear'));
-
         $response->assertRedirect(route('cart.show'));
         $this->assertNull(Session::get('cart'));
     }
 
-    /**
-     * Test validation failure during WhatsApp checkout.
-     */
-    public function test_checkout_validation_requires_name_and_delivery_type()
+    public function test_guest_checkout_requires_authentication()
     {
         $cart = [
-            1 => ['id' => 1, 'name' => 'Muffin de Chocolate', 'price' => 3.00, 'image' => 'muff.jpg', 'quantity' => 1]
+            $this->muffin->id => ['id' => $this->muffin->id, 'name' => 'Muffin de Chocolate', 'price' => 3.50, 'image' => 'products/muffin-de-chocolate.jpg', 'quantity' => 1],
         ];
         Session::put('cart', $cart);
 
         $response = $this->post(route('checkout.whatsapp'), [
-            'customer_name' => '',
-            'delivery_type' => ''
+            'delivery_type' => 'local',
         ]);
 
-        $response->assertSessionHasErrors(['customer_name', 'delivery_type']);
+        $response->assertRedirect(route('login'));
     }
 
-    /**
-     * Test WhatsApp redirection URL is built correctly and session cart is cleared.
-     */
-    public function test_successful_whatsapp_checkout_redirection_and_session_clear()
+    public function test_checkout_validation_requires_delivery_type()
     {
-        // Add items to session cart
         $cart = [
-            1 => ['id' => 1, 'name' => 'Muffin de Chocolate', 'price' => 3.00, 'image' => 'muff.jpg', 'quantity' => 2],
-            2 => ['id' => 2, 'name' => 'Té Verde Orgánico', 'price' => 2.00, 'image' => 'tea.jpg', 'quantity' => 1]
+            $this->muffin->id => ['id' => $this->muffin->id, 'name' => 'Muffin de Chocolate', 'price' => 3.50, 'image' => 'products/muffin-de-chocolate.jpg', 'quantity' => 1],
         ];
         Session::put('cart', $cart);
 
-        // Run post request with valid data
-        $response = $this->post(route('checkout.whatsapp'), [
-            'customer_name' => 'Jhostyn Baños',
-            'delivery_type' => 'llevar'
+        $response = $this->actingAs($this->client)->post(route('checkout.whatsapp'), [
+            'delivery_type' => '',
         ]);
 
-        // Assert redirect to api.whatsapp.com
-        $response->assertStatus(302);
-        
-        $redirectUrl = $response->headers->get('Location');
-        $this->assertStringContainsString('https://api.whatsapp.com/send', $redirectUrl);
-        $this->assertStringContainsString('phone=59398920065', $redirectUrl);
-        
-        // Assert session cart is cleared
+        $response->assertSessionHasErrors(['delivery_type']);
+    }
+
+    public function test_checkout_validation_requires_address_for_delivery()
+    {
+        $cart = [
+            $this->muffin->id => ['id' => $this->muffin->id, 'name' => 'Muffin de Chocolate', 'price' => 3.50, 'image' => 'products/muffin-de-chocolate.jpg', 'quantity' => 1],
+        ];
+        Session::put('cart', $cart);
+
+        $response = $this->actingAs($this->client)->post(route('checkout.whatsapp'), [
+            'delivery_type' => 'llevar',
+            'address_neighborhood' => '',
+            'address_main_street' => '',
+            'address_secondary_street' => '',
+            'address_reference' => '',
+        ]);
+
+        $response->assertSessionHasErrors([
+            'address_neighborhood',
+            'address_main_street',
+            'address_secondary_street',
+            'address_reference',
+        ]);
+    }
+
+    public function test_successful_whatsapp_checkout_redirection_and_session_clear()
+    {
+        $tea = Product::query()->where('slug', 'te-helado-de-durazno')->firstOrFail();
+
+        $cart = [
+            $this->muffin->id => ['id' => $this->muffin->id, 'name' => 'Muffin de Chocolate', 'price' => 3.50, 'image' => 'products/muffin-de-chocolate.jpg', 'quantity' => 2],
+            $tea->id => ['id' => $tea->id, 'name' => 'Té Helado de Durazno', 'price' => 3.00, 'image' => 'products/te-helado-de-durazno.jpg', 'quantity' => 1],
+        ];
+        Session::put('cart', $cart);
+
+        $response = $this->actingAs($this->client)->post(route('checkout.whatsapp'), [
+            'delivery_type' => 'llevar',
+            'address_neighborhood' => 'La Floresta',
+            'address_main_street' => 'Av. de los Shyris',
+            'address_secondary_street' => 'Calle El Universo',
+            'address_reference' => 'Casa blanca, portón negro',
+        ]);
+
+        $response->assertRedirect(route('checkout.success'));
+        $response->assertSessionHas('whatsapp_redirect_url');
+        $response->assertSessionHas('order_number');
+
+        $whatsappUrl = session('whatsapp_redirect_url');
+        $this->assertStringContainsString('https://api.whatsapp.com/send', $whatsappUrl);
         $this->assertNull(Session::get('cart'));
+
+        $this->assertDatabaseHas('orders', [
+            'user_id' => $this->client->id,
+            'customer_name' => $this->client->name,
+        ]);
+
+        $successPage = $this->actingAs($this->client)->get(route('checkout.success'));
+        $successPage->assertStatus(200);
+        $successPage->assertSee('Pedido realizado con éxito');
+        $successPage->assertSee('Abrir WhatsApp ahora', false);
     }
 }

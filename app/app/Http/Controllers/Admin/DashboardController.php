@@ -3,137 +3,76 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\Order;
+use App\Models\Product;
+use App\Models\User;
 
 class DashboardController extends Controller
 {
-    /**
-     * Muestra el Dashboard Administrativo con datos mock.
-     *
-     * Nota: Los datos mock serán reemplazados por consultas Eloquent
-     * cuando se integren los modelos Product, User y Pedidos.
-     */
     public function index()
     {
-        // ── KPI Metrics (Mock) ──
+        $totalProducts = Product::query()->count();
+        $activeProducts = Product::query()->where('is_active', true)->count();
+        $totalOrders = Order::query()->count();
+        $totalClients = User::query()->where('role', User::ROLE_CLIENT)->count();
+        $totalSales = Order::query()->sum('total');
+
         $metrics = [
             'ventas' => [
                 'label' => 'Total Ventas',
-                'value' => '$12,450',
-                'change' => '+12.5%',
+                'value' => '$'.number_format($totalSales, 2),
+                'change' => $totalOrders.' pedidos',
                 'direction' => 'up',
                 'icon' => 'currency-dollar',
             ],
             'pedidos' => [
                 'label' => 'Total Pedidos',
-                'value' => '328',
-                'change' => '+8.2%',
+                'value' => (string) $totalOrders,
+                'change' => 'registrados',
                 'direction' => 'up',
                 'icon' => 'shopping-cart',
             ],
             'productos' => [
                 'label' => 'Total Productos',
-                'value' => '156',
-                'change' => '+3',
+                'value' => (string) $totalProducts,
+                'change' => (string) $activeProducts.' activos',
                 'direction' => 'up',
                 'icon' => 'cube',
             ],
             'clientes' => [
                 'label' => 'Total Clientes',
-                'value' => '89',
-                'change' => '+5.1%',
+                'value' => (string) $totalClients,
+                'change' => 'registrados',
                 'direction' => 'up',
                 'icon' => 'users',
             ],
         ];
 
-        // ── Pedidos Recientes (Mock) ──
-        $recentOrders = [
-            [
-                'id' => '#ORD-2048',
-                'cliente' => 'María López',
-                'productos' => 'Muffin Chocolate, Galletas',
-                'total' => '$8.50',
-                'estado' => 'completado',
-                'fecha' => 'Hace 15 min',
-            ],
-            [
-                'id' => '#ORD-2047',
-                'cliente' => 'Carlos Gutiérrez',
-                'productos' => 'Brownie Premium',
-                'total' => '$5.00',
-                'estado' => 'pendiente',
-                'fecha' => 'Hace 32 min',
-            ],
-            [
-                'id' => '#ORD-2046',
-                'cliente' => 'Ana Morales',
-                'productos' => 'Chips Mixtos, Jugo Natural',
-                'total' => '$6.75',
-                'estado' => 'completado',
-                'fecha' => 'Hace 1 hora',
-            ],
-            [
-                'id' => '#ORD-2045',
-                'cliente' => 'Pedro Sánchez',
-                'productos' => 'Croissant, Café Latte',
-                'total' => '$7.25',
-                'estado' => 'pendiente',
-                'fecha' => 'Hace 2 horas',
-            ],
-            [
-                'id' => '#ORD-2044',
-                'cliente' => 'Laura Jiménez',
-                'productos' => 'Donas Glaseadas x3',
-                'total' => '$9.00',
-                'estado' => 'cancelado',
-                'fecha' => 'Hace 3 horas',
-            ],
-        ];
+        $recentOrders = Order::query()
+            ->with(['user', 'items'])
+            ->latest()
+            ->take(5)
+            ->get()
+            ->map(fn (Order $order) => [
+                'id' => $order->order_number,
+                'cliente' => $order->customer_name,
+                'productos' => $order->items->pluck('product_name')->take(3)->join(', '),
+                'total' => '$'.number_format($order->total, 2),
+                'estado' => match ($order->status) {
+                    'sent', 'completed' => 'completado',
+                    'cancelled' => 'cancelado',
+                    default => 'pendiente',
+                },
+                'estado_label' => $order->statusLabel(),
+                'fecha' => $order->created_at->diffForHumans(),
+                'url' => route('admin.pedidos.show', $order),
+            ]);
 
-        // ── Productos Recientes (Mock) ──
-        $recentProducts = [
-            [
-                'id' => 1,
-                'nombre' => 'Muffin de Chocolate',
-                'categoria' => 'Panadería',
-                'precio' => '$3.50',
-                'stock' => 24,
-                'estado' => 'activo',
-            ],
-            [
-                'id' => 2,
-                'nombre' => 'Chips de Vegetales',
-                'categoria' => 'Snacks',
-                'precio' => '$2.75',
-                'stock' => 15,
-                'estado' => 'activo',
-            ],
-            [
-                'id' => 3,
-                'nombre' => 'Brownie Premium',
-                'categoria' => 'Panadería',
-                'precio' => '$5.00',
-                'stock' => 0,
-                'estado' => 'inactivo',
-            ],
-            [
-                'id' => 4,
-                'nombre' => 'Jugo Natural Naranja',
-                'categoria' => 'Bebidas',
-                'precio' => '$2.50',
-                'stock' => 30,
-                'estado' => 'activo',
-            ],
-            [
-                'id' => 5,
-                'nombre' => 'Galletas de Avena',
-                'categoria' => 'Snacks',
-                'precio' => '$1.80',
-                'stock' => 8,
-                'estado' => 'activo',
-            ],
-        ];
+        $recentProducts = Product::query()
+            ->with('category')
+            ->latest()
+            ->take(5)
+            ->get();
 
         // ── Estadísticas Semanales (Mock) ──
         $weeklyStats = [
