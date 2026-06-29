@@ -49,6 +49,17 @@
                 <span>Productos</span>
             </a>
 
+            {{-- Movimientos (Módulo) --}}
+            <a href="{{ route('admin.movimientos.index') }}"
+               class="admin-nav-item {{ request()->routeIs('admin.movimientos.*') ? 'active' : '' }}"
+               aria-label="Movimientos">
+                {{-- Heroicon: arrows-up-down or switch-vertical-like --}}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10.5h13.5M3 6.75h13.5M6 3.75v6.75M18 20.25V13.5M21 16.5l-3 3-3-3" />
+                </svg>
+                <span>Movimientos</span>
+            </a>
+
             {{-- Categorías --}}
             <a href="#"
                class="admin-nav-item"
